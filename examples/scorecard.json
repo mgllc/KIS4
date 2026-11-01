@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "decision": "Review an offline framework package",
+  "owner": "engineering-review",
+  "rubric_id": "example-v1",
+  "weights_rationale": "Example only: security has the highest consequence; caller must set its own rubric before scoring.",
+  "weights": {
+    "simple": 0.2,
+    "secure": 0.4,
+    "sustainable": 0.2,
+    "scalable": 0.2
+  },
+  "threshold": 4,
+  "tradeoffs": "Additional evidence entry increases operator effort.",
+  "sensitivity": "Example only: all dimension scores equal 4; redistributing positive weights leaves the result at 4.",
+  "gates": [
+    {
+      "id": "authority",
+      "status": "pass",
+      "evidence": "fixture:scope-record"
+    }
+  ],
+  "dimensions": {
+    "simple": [
+      {
+        "id": "simple-1",
+        "weight": 1,
+        "score": 4,
+        "maturity_cap": 4,
+        "principle": "simple",
+        "obligation": "example design objective, not a regulatory claim",
+        "control": "fixture:control",
+        "test": "fixture:test",
+        "evidence": "fixture:result",
+        "rationale": "Synthetic passing example",
+        "maturity": "tested in fixture",
+        "confidence": "synthetic only"
+      }
+    ],
+    "secure": [
+      {
+        "id": "secure-1",
+        "weight": 1,
+        "score": 4,
+        "maturity_cap": 4,
+        "principle": "secure",
+        "obligation": "example design objective, not a regulatory claim",
+        "control": "fixture:control",
+        "test": "fixture:test",
+        "evidence": "fixture:result",
+        "rationale": "Synthetic passing example",
+        "maturity": "tested in fixture",
+        "confidence": "synthetic only"
+      }
+    ],
+    "sustainable": [
+      {
+        "id": "sustainable-1",
+        "weight": 1,
+        "score": 4,
+        "maturity_cap": 4,
+        "principle": "sustainable",
+        "obligation": "example design objective, not a regulatory claim",
+        "control": "fixture:control",
+        "test": "fixture:test",
+        "evidence": "fixture:result",
+        "rationale": "Synthetic passing example",
+        "maturity": "tested in fixture",
+        "confidence": "synthetic only"
+      }
+    ],
+    "scalable": [
+      {
+        "id": "scalable-1",
+        "weight": 1,
+        "score": 4,
+        "maturity_cap": 4,
+        "principle": "scalable",
+        "obligation": "example design objective, not a regulatory claim",
+        "control": "fixture:control",
+        "test": "fixture:test",
+        "evidence": "fixture:result",
+        "rationale": "Synthetic passing example",
+        "maturity": "tested in fixture",
+        "confidence": "synthetic only"
+      }
+    ]
+  },
+  "minimums": {
+    "simple": 4,
+    "secure": 4,
+    "sustainable": 4,
+    "scalable": 4
+  }
+}
