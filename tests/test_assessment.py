@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 import sys
 import unittest
+import kis4
 from kis4 import assess
 
 
@@ -71,12 +72,30 @@ class ScorecardTests(unittest.TestCase):
         self.assertEqual(assess(self.record)['composite'], 4.2)
         self.assertEqual(assess(self.record)['posture'], 'revise')
 
+    def test_display_rounding_does_not_relax_dimension_floor(self):
+        self.record['threshold'] = 3
+        self.record['dimensions']['secure'][0]['score'] = 3.9999999
+        result = assess(self.record)
+        self.assertEqual(result['scores']['secure'], 4)
+        self.assertEqual(result['posture'], 'revise')
+
+    def test_display_rounding_does_not_relax_composite_threshold(self):
+        self.record['minimums'] = dict.fromkeys(self.record['minimums'], 1)
+        self.record['dimensions']['secure'][0]['score'] = 3.9999999
+        result = assess(self.record)
+        self.assertEqual(result['composite'], 4)
+        self.assertEqual(result['posture'], 'revise')
+
     def test_cli_end_to_end_and_rejection(self):
-        result = subprocess.run([sys.executable,'-m','kis4'],input=json.dumps(self.record).encode(),capture_output=True)
+        isolated = ['-I'] if Path(kis4.__file__).resolve().is_relative_to(Path(sys.prefix).resolve()) else []
+        command = [sys.executable, *isolated, '-m', 'kis4']
+        result = subprocess.run(command,input=json.dumps(self.record).encode(),capture_output=True)
         self.assertEqual(result.returncode, 0)
         self.assertEqual(json.loads(result.stdout)['composite'], 4)
-        for data in (b'{}', b'{"schema":1,"schema":1}', b'{"schema":NaN}', b'x'*100001, b'\xff'):
-            result = subprocess.run([sys.executable,'-m','kis4'],input=data,capture_output=True)
+        overflow = json.dumps(self.record).replace('"score": 4', '"score": 1e999', 1).encode()
+        for data in (b'{}', b'{"schema":1,"schema":1}', b'{"schema":NaN}', b'x'*100001, b'\xff', overflow,
+                     overflow.replace(b'1e999', b'-1e999')):
+            result = subprocess.run(command,input=data,capture_output=True)
             self.assertEqual(result.returncode, 2)
 
 

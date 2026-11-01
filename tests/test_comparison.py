@@ -131,6 +131,27 @@ class ComparisonTests(unittest.TestCase):
         result = compare(record)
         self.assertTrue(all(s['best_options'] == ['current'] for s in result['sensitivity']))
 
+    def test_rounded_dimension_cannot_pass_a_strict_floor(self):
+        record = comparison()
+        for option in record['options']:
+            option['scorecard']['minimums']['secure'] = 4
+        record['options'][1]['scorecard']['dimensions']['secure'][0]['score'] = 3.9999999
+        result = compare(record)
+        self.assertIn('dimension-minimum-not-met', result['assessments'][1]['exclusions'])
+        self.assertEqual(result['baseline']['best_options'], ['current'])
+        self.assertTrue(all(s['best_options'] == ['current'] for s in result['sensitivity']))
+
+    def test_rounded_composite_cannot_pass_a_strict_threshold(self):
+        record = comparison()
+        for option in record['options']:
+            option['scorecard']['threshold'] = 4
+        for criteria in record['options'][1]['scorecard']['dimensions'].values():
+            criteria[0]['score'] = 3.9999999
+        result = compare(record)
+        self.assertIn('below-composite-threshold', result['assessments'][1]['exclusions'])
+        self.assertEqual(result['baseline']['best_options'], ['current'])
+        self.assertTrue(all(s['best_options'] == ['current'] for s in result['sensitivity']))
+
     def test_all_excluded_returns_no_winner(self):
         record = comparison()
         for option in record['options']:
@@ -163,7 +184,9 @@ class ComparisonTests(unittest.TestCase):
         result = subprocess.run(command, input=json.dumps(comparison()).encode(), capture_output=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)['baseline']['best_options'], ['candidate', 'current'])
-        for data in (b'{}', b'{"schema":1,"schema":1}', b'{"schema":NaN}', b'x'*100001, b'\xff'):
+        overflow = json.dumps(comparison()).replace('"score": 4', '"score": 1e999', 1).encode()
+        for data in (b'{}', b'{"schema":1,"schema":1}', b'{"schema":NaN}', b'x'*100001, b'\xff', overflow,
+                     overflow.replace(b'1e999', b'-1e999')):
             result = subprocess.run(command, input=data, capture_output=True)
             self.assertEqual(result.returncode, 2)
             self.assertNotIn(b'Traceback', result.stderr)

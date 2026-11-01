@@ -5,8 +5,8 @@ import json
 import math
 import sys
 
-from . import DIMENSIONS, assess
-from .__main__ import unique
+from . import DIMENSIONS, _composite, _dimension_total, assess
+from .__main__ import finite_float, unique
 
 
 def _instant(value):
@@ -59,10 +59,11 @@ def _rank(options, weights, threshold):
     for option in options:
         reasons = list(option['fixed_exclusions'])
         composite = None
-        scores = option['assessment']['scores']
+        scores = option['raw_scores']
         if not reasons:
-            composite = round(sum(scores[d] * weights[d] for d in DIMENSIONS), 6)
-            if composite < threshold:
+            raw_composite = _composite(scores, weights)
+            composite = round(raw_composite, 6)
+            if raw_composite < threshold:
                 reasons.append('below-composite-threshold')
         if reasons:
             excluded.append({'id': option['id'], 'reasons': reasons})
@@ -121,10 +122,12 @@ def compare(record):
             reasons.append('unknown-critical-gate')
         if assessment['gaps']:
             reasons.append('incomplete-material-evidence')
-        if any(assessment['scores'][d] is not None and assessment['scores'][d] < card['minimums'][d] for d in DIMENSIONS):
+        raw_scores = {d: _dimension_total(card['dimensions'][d])
+                      if assessment['scores'][d] is not None else None for d in DIMENSIONS}
+        if any(raw_scores[d] is not None and raw_scores[d] < card['minimums'][d] for d in DIMENSIONS):
             reasons.append('dimension-minimum-not-met')
         options.append({'id': identifier, 'assessment': assessment,
-                        'fixed_exclusions': reasons})
+                        'raw_scores': raw_scores, 'fixed_exclusions': reasons})
     baseline = _rank(options, rubric['weights'], rubric['threshold'])
     scenarios = []
     baseline_order = [group['options'] for group in baseline['ranking']]
@@ -159,7 +162,7 @@ def main():
         data = sys.stdin.buffer.read(100001)
         if len(data) > 100000:
             raise ValueError('Input exceeds 100000 bytes')
-        record = json.loads(data.decode('utf-8'), object_pairs_hook=unique,
+        record = json.loads(data.decode('utf-8'), object_pairs_hook=unique, parse_float=finite_float,
                             parse_constant=lambda _: (_ for _ in ()).throw(ValueError('Non-finite JSON number')))
         result = compare(record)
     except (ValueError, TypeError, UnicodeError, RecursionError):

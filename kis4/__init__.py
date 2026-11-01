@@ -13,6 +13,16 @@ def _number(value, lower, upper):
     return type(value) in (int, float) and lower <= value <= upper and math.isfinite(value)
 
 
+def _dimension_total(criteria):
+    """Unrounded weighted score; call only after validating every criterion."""
+    return math.fsum(c['score'] * c['weight'] for c in criteria) / math.fsum(c['weight'] for c in criteria)
+
+
+def _composite(scores, weights):
+    # Normalize floating-point weight-sum residue, not the decision threshold.
+    return math.fsum(scores[d] * weights[d] for d in DIMENSIONS) / math.fsum(weights.values())
+
+
 def assess(record):
     """Evaluate supplied evidence, never organizational approval or source truth.
 
@@ -53,13 +63,13 @@ def assess(record):
             failed.append(gate['id'])
         elif gate['status'] == 'unknown' or not _text(gate.get('evidence')):
             unknown.append(gate['id'])
-    scores, gaps = {}, []
+    scores, raw_scores, gaps = {}, {}, []
     criterion_ids = set()
     for dimension in DIMENSIONS:
         criteria = dimensions[dimension]
         if not isinstance(criteria, list) or not criteria:
             raise ValueError('Criteria required for ' + dimension)
-        total, weight, complete = 0.0, 0.0, True
+        weight, complete = 0.0, True
         for c in criteria:
             if not isinstance(c, dict) or not _text(c.get('id')) or c['id'] in criterion_ids:
                 raise ValueError('Invalid or duplicate criterion')
@@ -76,19 +86,19 @@ def assess(record):
             elif c['score'] > c['maturity_cap']:
                 gaps.append(c['id'] + ':maturity-cap-exceeded')
                 complete = False
-            else:
-                total += c['score'] * c['weight']
         if not math.isclose(weight, 1, abs_tol=1e-9):
             raise ValueError('Criterion weights must sum to 1 per dimension')
-        scores[dimension] = round(total, 6) if complete else None
+        raw_scores[dimension] = _dimension_total(criteria) if complete else None
+        scores[dimension] = round(raw_scores[dimension], 6) if complete else None
     composite = None
     if failed:
         posture = 'revise'
     elif unknown or gaps:
         posture = 'defer-pending-evidence'
     else:
-        composite = round(sum(scores[d] * weights[d] for d in DIMENSIONS), 6)
-        posture = 'ready-for-review' if composite >= threshold and all(scores[d] >= minimums[d] for d in DIMENSIONS) else 'revise'
+        raw_composite = _composite(raw_scores, weights)
+        composite = round(raw_composite, 6)
+        posture = 'ready-for-review' if raw_composite >= threshold and all(raw_scores[d] >= minimums[d] for d in DIMENSIONS) else 'revise'
     return {'schema': 1, 'framework': 'KIS4', 'rubric_id': record['rubric_id'],
             'posture': posture, 'scores': scores, 'composite': composite,
             'failed_gates': failed, 'unknown_gates': unknown, 'gaps': gaps,
