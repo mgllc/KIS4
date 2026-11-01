@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "repository": "mgllc/KIS4",
+  "state": "proposed-not-enrolled",
+  "registry_repository": "GovDOSS/GODSclaw",
+  "registry_path": "workspace/registry.json",
+  "entry": {
+    "repository": "mgllc/KIS4",
+    "state": "enrolled",
+    "profile": "python-package",
+    "workflow": "Framework OODA build",
+    "default_branch": "main"
+  },
+  "prerequisites": [
+    "review and merge the implementation PR through normal gates",
+    "verify the build on the exact resulting default-branch head",
+    "review the separate registry/portfolio mapping change"
+  ],
+  "limits": {
+    "max_active_maintenance_prs": 2,
+    "max_attempts_per_failure": 2
+  },
+  "authority": "no merge, deploy, permission changes or live API calls from maintenance"
+}
