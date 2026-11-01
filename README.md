@@ -12,12 +12,20 @@ Python 3.12 or newer, no runtime dependencies:
 
 ```sh
 python -m kis4 < examples/scorecard.json
+python -m kis4.compare < examples/comparison.json
 python -m unittest discover -s tests -v
 python -m pip install setuptools==84.1.0 wheel==0.48.0
 python scripts/ooda_cycle.py
 ```
 
 CLI reads at most 100 KB from stdin, rejects duplicate keys and non-finite JSON constants, and emits JSON. Exit 0: ready for review; 1: gaps/revision required; 2: invalid input. The public Python API is `kis4.assess(record)`. Examples are synthetic and must never be used as real authority/evidence. SOA4 example validity dates intentionally expire; production records need actual evidence and current validity.
+
+The internal option-comparison API is `kis4.compare.compare(record)`, with installed
+CLI `kis4-compare`. It binds all options to the same frozen scoring rules, excludes
+stale or incomplete evidence, preserves ties, and calculates eight weight-sensitivity
+scenarios. See [the comparison contract](docs/comparison-contract.md) for the exact
+schema, exit statuses, internal workflow and evidence limits. The CLI does not
+authorize any organizational action.
 
 ## Contract
 

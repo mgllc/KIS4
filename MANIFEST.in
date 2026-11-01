@@ -2,3 +2,4 @@ include README.md pyproject.toml
 recursive-include examples *.json
 recursive-include tests *.py
 recursive-include scripts *.py
+recursive-include docs *.md *.json

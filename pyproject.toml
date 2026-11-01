@@ -12,6 +12,7 @@ dependencies = []
 
 [project.scripts]
 kis4 = "kis4.__main__:main"
+kis4-compare = "kis4.compare:main"
 
 [tool.setuptools.packages.find]
 include = ["kis4*"]
